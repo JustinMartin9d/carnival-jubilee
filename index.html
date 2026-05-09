@@ -145,7 +145,7 @@ var CABINS = {"1001L":{f:"Betty",l:"Flores"},"1006":{f:"Melissa",l:"Johnson"},"1
 
 var SVCS = {towels:{lbl:"Extra Towels",cat:"Housekeeping",eta:"15-20 minutes"},towel:{lbl:"Extra Towels",cat:"Housekeeping",eta:"15-20 minutes"},sheets:{lbl:"Fresh Sheets",cat:"Housekeeping",eta:"20-30 minutes"},blanket:{lbl:"Extra Blanket",cat:"Housekeeping",eta:"15-20 minutes"},pillow:{lbl:"Extra Pillow",cat:"Housekeeping",eta:"15-20 minutes"},housekeep:{lbl:"Housekeeping",cat:"Housekeeping",eta:"20-30 minutes"},clean:{lbl:"Stateroom Cleaning",cat:"Housekeeping",eta:"20-30 minutes"},broken:{lbl:"Maintenance Request",cat:"Maintenance",eta:"30-45 minutes"},fix:{lbl:"Maintenance Request",cat:"Maintenance",eta:"30-45 minutes"},repair:{lbl:"Maintenance Request",cat:"Maintenance",eta:"30-45 minutes"},leak:{lbl:"Plumbing Issue",cat:"Maintenance",eta:"20-30 minutes"},toilet:{lbl:"Bathroom Issue",cat:"Maintenance",eta:"20-30 minutes"},ac:{lbl:"AC Issue",cat:"Maintenance",eta:"30-45 minutes"},heat:{lbl:"Temperature Issue",cat:"Maintenance",eta:"30-45 minutes"},noise:{lbl:"Noise Complaint",cat:"Guest Services",eta:"15-20 minutes"},ice:{lbl:"Ice Bucket",cat:"Housekeeping",eta:"10-15 minutes"},toiletries:{lbl:"Toiletry Restock",cat:"Housekeeping",eta:"15-20 minutes"},soap:{lbl:"Toiletry Restock",cat:"Housekeeping",eta:"15-20 minutes"},shampoo:{lbl:"Toiletry Restock",cat:"Housekeeping",eta:"15-20 minutes"}};
 
-var lang="en",pirate=false,history=[],pending=null,requests=[],unlocked=false,activeTab="r";
+var lang="en",pirate=false,chatHistory=[],pending=null,requests=[],unlocked=false,activeTab="r";
 var ADMIN_PW="Ron";
 var LANGS={en:{p:"Ask Captain Woolly anything...",s:"Carnival Jubilee - Western Caribbean"},es:{p:"Preguntale al Capitan Woolly...",s:"Carnival Jubilee - Caribe Occidental"},fr:{p:"Demandez au Capitaine Woolly...",s:"Carnival Jubilee - Caraibes"},de:{p:"Fragen Sie Kapitan Woolly...",s:"Carnival Jubilee - Karibik"},it:{p:"Chiedi al Capitano Woolly...",s:"Carnival Jubilee - Caraibi"},pt:{p:"Pergunte ao Capitao Woolly...",s:"Carnival Jubilee - Caribe"},zh:{p:"Wen Woolly Chuan Zhang...",s:"Carnival Jubilee"}};
 
@@ -245,7 +245,7 @@ function send(override){
   document.getElementById("chips").innerHTML="";
   document.getElementById("sendBtn").disabled=true;
   addMsg("user",text);
-  history.push({role:"user",content:text});
+  chatHistory.push({role:"user",content:text});
 
   if(pending&&pending.waiting){
     var key=text.toUpperCase().replace(/\s/g,"");
@@ -253,7 +253,7 @@ function send(override){
     if(!guest){
       var nf="I'm sorry, I couldn't find cabin "+text+". Could you double-check the number? You can find it on your key card or in the Carnival HUB app.";
       addMsg("bot",nf);
-      history.push({role:"assistant",content:nf});
+      chatHistory.push({role:"assistant",content:nf});
       document.getElementById("sendBtn").disabled=false;
       return;
     }
@@ -263,7 +263,7 @@ function send(override){
     var salut=(guest.l.charAt(guest.l.length-1)==="s"?"Ms.":"Mr.")+" "+guest.l;
     var msg="Thank you, "+salut+"! Your request for **"+svc.lbl+"** has been sent to our "+svc.cat+" team and will arrive within **"+svc.eta+"**. Is there anything else I can help you with?";
     addMsg("bot",msg,card);
-    history.push({role:"assistant",content:msg});
+    chatHistory.push({role:"assistant",content:msg});
     pending=null;
     setChips(["Dining options","Entertainment tonight","Shore excursions","Spa booking"]);
     document.getElementById("sendBtn").disabled=false;
@@ -275,7 +275,7 @@ function send(override){
     pending={svc:detected,waiting:true};
     var ask="Of course! I'll get that arranged for you right away.\n\nCould you please provide your **cabin number**? You can find it on your key card or in the Carnival HUB app.";
     addMsg("bot",ask);
-    history.push({role:"assistant",content:ask});
+    chatHistory.push({role:"assistant",content:ask});
     document.getElementById("sendBtn").disabled=false;
     return;
   }
@@ -286,7 +286,7 @@ function send(override){
 function callAI(){
   addTyping();
   var msgs=[];
-  for(var i=0;i<history.length;i++)msgs.push({role:history[i].role,content:history[i].content});
+  for(var i=0;i<chatHistory.length;i++)msgs.push({role:chatHistory[i].role,content:chatHistory[i].content});
   fetch("/api/chat",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
@@ -308,7 +308,7 @@ function callAI(){
       reader.read().then(function(result){
         if(result.done){
           bubble.removeAttribute("id");
-          history.push({role:"assistant",content:full});
+          chatHistory.push({role:"assistant",content:full});
           setChips(["What's for dinner?","BOLT roller coaster","Today's port","Spa hours"]);
           document.getElementById("sendBtn").disabled=false;
           return;
@@ -448,13 +448,13 @@ function filterManifest(){
 }
 
 function renderChatLog(b){
-  if(history.length===0){
+  if(chatHistory.length===0){
     b.innerHTML='<div class="empty">No messages yet.</div>';
     return;
   }
   var html="";
-  for(var i=0;i<history.length;i++){
-    var m=history[i];
+  for(var i=0;i<chatHistory.length;i++){
+    var m=chatHistory[i];
     var bg=m.role==="user"?"#e8f0fe":"#f8f9fa";
     var col=m.role==="user"?"#014E8F":"#B61B38";
     var who=m.role==="user"?"Guest":"Captain Woolly";
