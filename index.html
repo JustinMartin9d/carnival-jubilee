@@ -43,8 +43,8 @@ header{flex-shrink:0;background:var(--b);color:#fff;padding:10px 14px;display:fl
 .av.u{display:none}
 .msg.u{padding-left:38px;justify-content:flex-end}
 .app.pirate .av.b{background:var(--pg);color:var(--pd)}
-.mw{min-width:0;max-width:calc(100% - 38px)}
-.msg.u .mw{text-align:right}
+.mw{min-width:0;max-width:calc(100% - 38px);display:flex;flex-direction:column}
+.msg.u .mw{align-items:flex-end}
 .bub{padding:11px 14px;font-size:14px;line-height:1.5;overflow-wrap:break-word;border-radius:18px;display:inline-block}
 .msg.u .bub{background:var(--b);color:#fff;border-bottom-right-radius:5px}
 .msg.b .bub{background:#fff;color:var(--t);border-bottom-left-radius:5px;border-left:3px solid var(--r);box-shadow:0 1px 5px rgba(0,0,0,.06)}
@@ -137,7 +137,7 @@ header{flex-shrink:0;background:var(--b);color:#fff;padding:10px 14px;display:fl
 .cl.u .who{color:var(--b)}
 .cl.b .who{color:var(--r)}
 .cl .ct{font-size:13px;color:#333;white-space:pre-wrap;word-break:break-word}
-@media(min-width:768px){header{padding:12px 20px}.tt h1{font-size:17px}.chat{padding:20px;max-width:840px;margin:0 auto;width:100%}.chips{padding:10px 20px 0;max-width:840px;margin:0 auto;width:100%}.input{padding:14px 20px;padding-bottom:14px}.row{max-width:800px;margin:0 auto}.bub{font-size:15px}}
+@media(min-width:768px){header{padding:12px 20px}.tt h1{font-size:17px}.chat{padding:20px;max-width:840px;margin:0 auto;width:100%}.chips{padding:10px 20px 0;max-width:840px;margin:0 auto;width:100%}.input{padding:14px 20px;padding-bottom:14px}.row{max-width:800px;margin:0 auto}.bub{font-size:15px;max-width:75%}}
 @media(min-width:1024px){.body{background:#e4ebf5}.chat{background:var(--bg);border-radius:14px;margin:14px auto;padding:24px 28px;box-shadow:0 2px 14px rgba(0,0,0,.06)}.app.pirate .body{background:#0a0503}.app.pirate .chat{background:#1a0f08}}
 @media(max-width:380px){.tt p{display:none}.ctrls .lbl{display:none}}
 </style>
@@ -286,20 +286,24 @@ function send(override){
 
   if(pending&&pending.waiting){
     var key=text.toUpperCase().replace(/\s/g,""),g=CABINS[key];
-    if(!g){
-      var nf="I'm sorry, I couldn't find cabin "+text+". Could you double-check the number? You can find it on your key card or in the Carnival HUB app.";
+    if(g){
+      var svc=pending.svc;
+      submitReq(svc,key,g);
+      var card=buildCard(svc,key,g);
+      var sal=(g.l.charAt(g.l.length-1)==="s"?"Ms.":"Mr.")+" "+g.l;
+      var msg="Thank you, "+sal+"! Your request for **"+svc[0]+"** has been sent to our "+svc[1]+" team and will arrive within **"+svc[2]+"**. Anything else I can help with?";
+      addMsg("b",msg,card);chatHistory.push({role:"assistant",content:msg});
+      pending=null;
+      setChips(["Dining options","Entertainment tonight","Shore excursions","Spa booking"]);
+      $("snd").disabled=false;return;
+    }
+    var looksLikeCabin=/^[0-9]{2,4}[LR]?$/i.test(key)&&key.length<=5;
+    if(looksLikeCabin){
+      var nf="I'm sorry, I couldn't find cabin "+text+". Could you double-check the number? You can find it on your key card or in the Carnival HUB app. Or feel free to ask me something else!";
       addMsg("b",nf);chatHistory.push({role:"assistant",content:nf});
       $("snd").disabled=false;return;
     }
-    var svc=pending.svc;
-    submitReq(svc,key,g);
-    var card=buildCard(svc,key,g);
-    var sal=(g.l.charAt(g.l.length-1)==="s"?"Ms.":"Mr.")+" "+g.l;
-    var msg="Thank you, "+sal+"! Your request for **"+svc[0]+"** has been sent to our "+svc[1]+" team and will arrive within **"+svc[2]+"**. Anything else I can help with?";
-    addMsg("b",msg,card);chatHistory.push({role:"assistant",content:msg});
     pending=null;
-    setChips(["Dining options","Entertainment tonight","Shore excursions","Spa booking"]);
-    $("snd").disabled=false;return;
   }
 
   var d=detect(text);
